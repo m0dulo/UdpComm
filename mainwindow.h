@@ -13,11 +13,19 @@ class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
+private:
+    QLabel* LabSocketState;
+    QUdpSocket* udpSocket;
+    QString getLocalIP();
+
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
 private slots:
+    void onSocketStateChange(QAbstractSocket::SocketState socketState);
+    void onSocketReadyRead();
+
     void on_actStart_triggered();
     void on_actStop_triggered();
     void on_actClear_triggered();
