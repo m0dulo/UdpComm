@@ -86,10 +86,24 @@ void MainWindow::onSocketReadyRead() {
         datagram.resize(udpSocket->pendingDatagramSize());
         QHostAddress peerAddr;
         quint16 peerPort;
+        QString targetIP = ui->comboTargetIP->currentText();
+        QHostAddress targetAddr(targetIP);
+        quint16 targetPort = ui->spinTargetPort->value();
         udpSocket->readDatagram(datagram.data(), datagram.size(), &peerAddr, &peerPort);
         QString str = datagram.data();
-        QString peer = "[From " + peerAddr.toString() + ":" + QString::number(peerPort) + "]";
-        ui->plainTextEdit->appendPlainText(peer + str);
+
+        QRegularExpression re("[a-z]");
+        QRegularExpressionMatch match = re.match(str);
+        if (match.hasMatch()) {
+            QString peer = "[CONVERT From " + peerAddr.toString() + ":" + QString::number(peerPort) + "]";
+            QByteArray sendStr = str.toUpper().toUtf8();
+            ui->plainTextEdit->appendPlainText(peer + str);
+            udpSocket->writeDatagram(sendStr, targetAddr, targetPort);
+            ui->plainTextEdit->appendPlainText("[CONVERT out] " + sendStr);
+        } else {
+            QString peer = "[From " + peerAddr.toString() + ":" + QString::number(peerPort) + "]";
+            ui->plainTextEdit->appendPlainText(peer + str);
+        }
     }
 }
 
@@ -123,7 +137,7 @@ void MainWindow::on_btnSend_clicked() {
     quint16 targetPort = ui->spinTargetPort->value();
     QString msg = ui->editMsg->text();
 
-    QByteArray str = msg.toUpper().toUtf8();
+    QByteArray str = msg.toUtf8();
     udpSocket->writeDatagram(str, targetAddr, targetPort);
 
     ui->plainTextEdit->appendPlainText("[out] " + msg);
@@ -134,7 +148,7 @@ void MainWindow::on_btnSend_clicked() {
 void MainWindow::on_btnBroadcast_clicked() {
     quint16 targetPort = ui->spinTargetPort->value();
     QString msg = ui->editMsg->text();
-    QByteArray str = msg.toUpper().toUtf8();
+    QByteArray str = msg.toUtf8();
 
     udpSocket->writeDatagram(str, QHostAddress::Broadcast, targetPort);
 
